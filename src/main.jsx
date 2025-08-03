@@ -9,6 +9,9 @@ import { BrowserRouter, Route, Routes } from "react-router";
 import ProductDetail from "./pages/product/ProductDetail.jsx";
 import Login from "./pages/auth/Login.jsx";
 import RootLayout from "./components/layouts/root-layout.jsx";
+import Register from "./pages/auth/Register.jsx";
+import Register2 from "./pages/auth/Register2.jsx";
+import CreateProduct from "./pages/product/CreateProduct.jsx";
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>
@@ -19,8 +22,11 @@ createRoot(document.getElementById("root")).render(
             <Route path="/" element={<App />} />
             <Route path="/products" element={<Product />} />
             <Route path="/products/:id" element={<ProductDetail />} />
+            <Route path="/create-product" element={<CreateProduct />} />
           </Route>
           <Route path="/login" element={<Login />} />
+
+          <Route path="/register" element={<Register2 />} />
         </Routes>
       </BrowserRouter>
     </Provider>
