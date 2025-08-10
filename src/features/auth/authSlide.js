@@ -2,28 +2,26 @@ import { apiSlice } from "../api/apiSlice";
 
 export const authApi = apiSlice.injectEndpoints({
   endpoints: (build) => ({
-    
     register: build.mutation({
-      query: (formData) => ({
-        url: `/auth/register`,
-        method: "POST",
-        
-        body: formData,
-      })
-    }),
-
-    
-    login: build.mutation({
+      // POST /users with JSON body { name, email, password, avatar }
       query: (body) => ({
-        url: `/auth/login`,
+        url: "/users",
         method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: body
-      })
-    })
-  })
+        body, // fetchBaseQuery will set JSON headers & stringify
+      }),
+    }),
+    login: build.mutation({
+      // POST /auth/login with JSON body { email, password }
+      query: (body) => ({
+        url: "/auth/login",
+        method: "POST",
+        body,
+      }),
+    }),
+  }),
 });
 
-export const { useLoginMutation, useRegisterMutation } = authApi;
+
+export const { useRegisterMutation, useLoginMutation } = authApi;
+
+

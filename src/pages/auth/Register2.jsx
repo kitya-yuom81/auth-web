@@ -199,6 +199,7 @@ const schema = z.object({
 export default function Register() {
   const [isShowPassword, setIsShowPassword] = useState(false);
   const [avatarPreview, setAvatarPreview] = useState(null);
+  const [avatarFile, setAvatarFile] = useState(null);
 
   const [registerUser, { isLoading }] = useRegisterMutation();
   const navigate = useNavigate();
@@ -215,30 +216,54 @@ export default function Register() {
   });
 
   const handleAvatarChange = (file) => {
+    setAvatarFile(file);
+    setValue("avatar", [file]); // store file in form state
     const reader = new FileReader();
     reader.onloadend = () => {
-      setAvatarPreview(reader.result); // Show preview only
-      setValue("avatar", [file]);
+      setAvatarPreview(reader.result);
     };
     reader.readAsDataURL(file);
   };
 
+  const uploadAvatar = async (file) => {
+    const imageForm = new FormData();
+    imageForm.append("file", file);
+
+    const res = await fetch("https://api.escuelajs.co/api/v1/files/upload", {
+      method: "POST",
+      body: imageForm,
+    });
+
+    if (!res.ok) throw new Error("Avatar upload failed");
+
+    const data = await res.json();
+    return data.location; // ✅ this is the hosted image URL
+  };
+
   const onSubmit = async (data) => {
     try {
+      let avatarURL = "";
+
+      if (avatarFile) {
+        avatarURL = await uploadAvatar(avatarFile); // 👈 upload image first
+      }
+
       const payload = {
         name: data.name,
         email: data.email,
         password: data.password,
-        // 👇 Avatar is not sent
+        avatar: avatarURL || "https://i.imgur.com/placeholder.jpg", // fallback avatar
       };
 
-      const result = await registerUser(payload).unwrap();
+      await registerUser(payload).unwrap();
+
       toast.success("Registered successfully!");
       navigate("/login");
     } catch (error) {
       toast.error(error?.data?.message || "Registration failed");
     } finally {
       reset();
+      setAvatarFile(null);
       setAvatarPreview(null);
     }
   };
@@ -259,19 +284,22 @@ export default function Register() {
         <div className="md:w-1/2 w-full p-8">
           <h2 className="text-3xl font-bold text-center text-teal-600 mb-6">Register</h2>
 
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-            {/* Avatar Preview Only */}
+          <form
+            onSubmit={handleSubmit(onSubmit)}
+            className="space-y-4"
+            encType="multipart/form-data"
+          >
+            {/* Avatar Preview */}
             <div className="flex justify-center mb-4">
               <div
                 onDrop={(e) => {
                   e.preventDefault();
                   const file = e.dataTransfer.files[0];
-                  handleAvatarChange(file);
+                  if (file) handleAvatarChange(file);
                 }}
                 onDragOver={(e) => e.preventDefault()}
                 className="w-28 h-28 border-2 border-dashed border-gray-300 rounded-full flex items-center justify-center relative overflow-hidden hover:border-teal-500 cursor-pointer"
               >
-                {/* Preview */}
                 {avatarPreview ? (
                   <img
                     src={avatarPreview}
@@ -288,8 +316,6 @@ export default function Register() {
                     </span>
                   </label>
                 )}
-
-                {/* Hidden File Input */}
                 <input
                   type="file"
                   id="avatar"
@@ -326,7 +352,7 @@ export default function Register() {
             <div className="relative">
               <input
                 type={isShowPassword ? "text" : "password"}
-                placeholder="Enter Password"
+                placeholder="Enter password"
                 {...register("password")}
                 className="w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-teal-500 outline-none"
               />
